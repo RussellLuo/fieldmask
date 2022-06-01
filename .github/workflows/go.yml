@@ -3,6 +3,7 @@ on: [push,pull_request]
 jobs:
   lint:
     name: Lint
+    if: false # Temporarily disable lint
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go 1.16

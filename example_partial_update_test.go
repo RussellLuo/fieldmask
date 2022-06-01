@@ -8,20 +8,20 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Address struct {
+type Address2 struct {
 	Country  string `json:"country,omitempty"`
 	Province string `json:"province,omitempty"`
 	City     string `json:"city,omitempty"`
 }
 
-type Person struct {
-	Name    string  `json:"name,omitempty"`
-	Age     int     `json:"age,omitempty"`
-	Address Address `json:"address,omitempty"`
+type Person2 struct {
+	Name    string   `json:"name,omitempty"`
+	Age     int      `json:"age,omitempty"`
+	Address Address2 `json:"address,omitempty"`
 }
 
 type UpdatePersonRequest struct {
-	Person
+	Person2
 	FieldMask fieldmask.FieldMask `json:"-"`
 }
 
@@ -29,14 +29,14 @@ func (r *UpdatePersonRequest) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &r.FieldMask); err != nil {
 		return err
 	}
-	return mapstructure.Decode(r.FieldMask, &r.Person)
+	return mapstructure.Decode(r.FieldMask, &r.Person2)
 }
 
 func Example_partialUpdate() {
-	person := Person{
+	person := Person2{
 		Name: "foo",
 		Age:  20,
-		Address: Address{
+		Address: Address2{
 			Country:  "X",
 			Province: "Y",
 			City:     "Z",
@@ -80,6 +80,6 @@ func Example_partialUpdate() {
 	fmt.Printf("updated: %#v\n", person)
 
 	// Output:
-	// initial: fieldmask_test.Person{Name:"foo", Age:20, Address:fieldmask_test.Address{Country:"X", Province:"Y", City:"Z"}}
-	// updated: fieldmask_test.Person{Name:"foo", Age:10, Address:fieldmask_test.Address{Country:"X", Province:"Y", City:"ZZ"}}
+	// initial: fieldmask_test.Person2{Name:"foo", Age:20, Address:fieldmask_test.Address2{Country:"X", Province:"Y", City:"Z"}}
+	// updated: fieldmask_test.Person2{Name:"foo", Age:10, Address:fieldmask_test.Address2{Country:"X", Province:"Y", City:"ZZ"}}
 }

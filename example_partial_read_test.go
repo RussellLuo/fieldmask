@@ -8,8 +8,20 @@ import (
 	"github.com/fatih/structs"
 )
 
+type Address1 struct {
+	Country  string `json:"country,omitempty"`
+	Province string `json:"province,omitempty"`
+	City     string `json:"city,omitempty"`
+}
+
+type Person1 struct {
+	Name    string   `json:"name,omitempty"`
+	Age     int      `json:"age,omitempty"`
+	Address Address1 `json:"address,omitempty"`
+}
+
 type GetPersonResponse struct {
-	Person    `json:",flatten"` // "flatten" is only supported by structs
+	Person1   `json:",flatten"` // "flatten" is only supported by structs
 	FieldMask []string          `json:"-"`
 }
 
@@ -26,14 +38,14 @@ func (r *GetPersonResponse) MarshalJSON() ([]byte, error) {
 		fm = m
 	}
 
-	return json.Marshal(map[string]interface{}(fm))
+	return json.Marshal(fm)
 }
 
 func Example_partialRead() {
-	person := Person{
+	person := Person1{
 		Name: "foo",
 		Age:  20,
-		Address: Address{
+		Address: Address1{
 			Country:  "X",
 			Province: "Y",
 			City:     "Z",
@@ -42,7 +54,7 @@ func Example_partialRead() {
 	fmt.Printf("original: %#v\n", person)
 
 	resp := &GetPersonResponse{
-		Person:    person,
+		Person1:   person,
 		FieldMask: []string{"name", "address.city"},
 	}
 	blob, err := json.Marshal(resp)
@@ -53,6 +65,6 @@ func Example_partialRead() {
 	fmt.Printf("marshaled: %s\n", blob)
 
 	// Output:
-	// original: fieldmask_test.Person{Name:"foo", Age:20, Address:fieldmask_test.Address{Country:"X", Province:"Y", City:"Z"}}
+	// original: fieldmask_test.Person1{Name:"foo", Age:20, Address:fieldmask_test.Address1{Country:"X", Province:"Y", City:"Z"}}
 	// marshaled: {"address":{"city":"Z"},"name":"foo"}
 }
