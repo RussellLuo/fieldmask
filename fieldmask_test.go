@@ -127,7 +127,7 @@ func TestFrom(t *testing.T) {
 	}
 }
 
-func TestGet(t *testing.T) {
+func TestFieldMask_Get(t *testing.T) {
 	fm := fieldmask.FieldMask(testMap)
 
 	tests := []struct {

@@ -21,12 +21,12 @@ type Person1 struct {
 }
 
 type GetPersonResponse struct {
-	Person1   `json:",flatten"` // "flatten" is only supported by structs
-	FieldMask []string          `json:"-"`
+	Person1
+	FieldMask []string `json:"-"`
 }
 
 func (resp *GetPersonResponse) MarshalJSON() ([]byte, error) {
-	s := structs.New(resp)
+	s := structs.New(resp.Person1)
 	s.TagName = "json"
 	m := s.Map()
 
