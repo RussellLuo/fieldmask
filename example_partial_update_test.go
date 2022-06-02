@@ -25,11 +25,11 @@ type UpdatePersonRequest struct {
 	FieldMask fieldmask.FieldMask `json:"-"`
 }
 
-func (r *UpdatePersonRequest) UnmarshalJSON(b []byte) error {
-	if err := json.Unmarshal(b, &r.FieldMask); err != nil {
+func (req *UpdatePersonRequest) UnmarshalJSON(b []byte) error {
+	if err := json.Unmarshal(b, &req.FieldMask); err != nil {
 		return err
 	}
-	return mapstructure.Decode(r.FieldMask, &r.Person2)
+	return mapstructure.Decode(req.FieldMask, &req.Person2)
 }
 
 func Example_partialUpdate() {

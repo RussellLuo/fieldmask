@@ -25,19 +25,12 @@ type GetPersonResponse struct {
 	FieldMask []string          `json:"-"`
 }
 
-func (r *GetPersonResponse) MarshalJSON() ([]byte, error) {
-	s := structs.New(r)
+func (resp *GetPersonResponse) MarshalJSON() ([]byte, error) {
+	s := structs.New(resp)
 	s.TagName = "json"
 	m := s.Map()
 
-	fm := fieldmask.FieldMask{}
-	fm.Copy(m, r.FieldMask...)
-
-	if len(r.FieldMask) == 0 {
-		// Return all fields if the field mask is omitted.
-		fm = m
-	}
-
+	fm := fieldmask.From(m, resp.FieldMask...)
 	return json.Marshal(fm)
 }
 

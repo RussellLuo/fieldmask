@@ -9,11 +9,122 @@ import (
 
 var testMap = map[string]interface{}{
 	"name": "foo",
-	"age":  1,
+	"age":  20,
 	"address": map[string]interface{}{
-		"country": "X",
-		"city":    "Y",
+		"city": "Z",
 	},
+}
+
+func TestFrom(t *testing.T) {
+	src := testMap
+
+	tests := []struct {
+		name    string
+		inPaths []string
+		want    fieldmask.FieldMask
+	}{
+		{
+			name:    "select name",
+			inPaths: []string{"name"},
+			want: fieldmask.FieldMask{
+				"name": "foo",
+			},
+		},
+		{
+			name:    "select age",
+			inPaths: []string{"age"},
+			want: fieldmask.FieldMask{
+				"age": 20,
+			},
+		},
+		{
+			name:    "select xxx",
+			inPaths: []string{"xxx"},
+			want: fieldmask.FieldMask{
+				"xxx": nil,
+			},
+		},
+		{
+			name:    "select address",
+			inPaths: []string{"address"},
+			want: fieldmask.FieldMask{
+				"address": map[string]interface{}{
+					"city": "Z",
+				},
+			},
+		},
+		{
+			name:    "select address.country",
+			inPaths: []string{"address.country"},
+			want: fieldmask.FieldMask{
+				"address": map[string]interface{}{
+					"country": nil,
+				},
+			},
+		},
+		{
+			name:    "select address.province",
+			inPaths: []string{"address.province"},
+			want: fieldmask.FieldMask{
+				"address": map[string]interface{}{
+					"province": nil,
+				},
+			},
+		},
+		{
+			name:    "select address.city",
+			inPaths: []string{"address.city"},
+			want: fieldmask.FieldMask{
+				"address": map[string]interface{}{
+					"city": "Z",
+				},
+			},
+		},
+		{
+			name:    "select deep1.deep2.deep3.key",
+			inPaths: []string{"deep1.deep2.deep3.key"},
+			want: fieldmask.FieldMask{
+				"deep1": map[string]interface{}{
+					"deep2": map[string]interface{}{
+						"deep3": map[string]interface{}{
+							"key": nil,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "select multiple fields",
+			inPaths: []string{"name", "xxx", "address.city"},
+			want: fieldmask.FieldMask{
+				"name": "foo",
+				"xxx":  nil,
+				"address": map[string]interface{}{
+					"city": "Z",
+				},
+			},
+		},
+		{
+			name:    "select all fields",
+			inPaths: nil,
+			want: fieldmask.FieldMask{
+				"name": "foo",
+				"age":  20,
+				"address": map[string]interface{}{
+					"city": "Z",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := fieldmask.From(src, tt.inPaths...)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("FieldMask: Got (%#v) != Want (%#v)", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestGet(t *testing.T) {
@@ -34,29 +145,22 @@ func TestGet(t *testing.T) {
 		{
 			name:      "age exists",
 			inPath:    "age",
-			wantValue: 1,
+			wantValue: 20,
 			wantOK:    true,
-		},
-		{
-			name:      "is_male absent",
-			inPath:    "is_male",
-			wantValue: nil,
-			wantOK:    false,
 		},
 		{
 			name:   "address exists",
 			inPath: "address",
 			wantValue: map[string]interface{}{
-				"country": "X",
-				"city":    "Y",
+				"city": "Z",
 			},
 			wantOK: true,
 		},
 		{
-			name:      "address.country exists",
+			name:      "address.country absent",
 			inPath:    "address.country",
-			wantValue: "X",
-			wantOK:    true,
+			wantValue: nil,
+			wantOK:    false,
 		},
 		{
 			name:      "address.province absent",
@@ -67,7 +171,7 @@ func TestGet(t *testing.T) {
 		{
 			name:      "address.city exists",
 			inPath:    "address.city",
-			wantValue: "Y",
+			wantValue: "Z",
 			wantOK:    true,
 		},
 	}
@@ -82,95 +186,6 @@ func TestGet(t *testing.T) {
 
 			if gotOK != tt.wantOK {
 				t.Fatalf("OK: Got (%#v) != Want (%#v)", gotOK, tt.wantOK)
-			}
-		})
-	}
-}
-
-func TestCopy(t *testing.T) {
-	src := testMap
-
-	tests := []struct {
-		name    string
-		inPaths []string
-		wantDst map[string]interface{}
-	}{
-		{
-			name:    "copy name",
-			inPaths: []string{"name"},
-			wantDst: map[string]interface{}{
-				"name": "foo",
-			},
-		},
-		{
-			name:    "copy age",
-			inPaths: []string{"age"},
-			wantDst: map[string]interface{}{
-				"age": 1,
-			},
-		},
-		{
-			name:    "copy is_male",
-			inPaths: []string{"is_male"},
-			wantDst: map[string]interface{}{},
-		},
-		{
-			name:    "copy address",
-			inPaths: []string{"address"},
-			wantDst: map[string]interface{}{
-				"address": map[string]interface{}{
-					"country": "X",
-					"city":    "Y",
-				},
-			},
-		},
-		{
-			name:    "copy address.country",
-			inPaths: []string{"address.country"},
-			wantDst: map[string]interface{}{
-				"address": map[string]interface{}{
-					"country": "X",
-				},
-			},
-		},
-		{
-			name:    "copy address.province",
-			inPaths: []string{"address.province"},
-			wantDst: map[string]interface{}{
-				"address": map[string]interface{}{},
-			},
-		},
-		{
-			name:    "copy address.city",
-			inPaths: []string{"address.city"},
-			wantDst: map[string]interface{}{
-				"address": map[string]interface{}{
-					"city": "Y",
-				},
-			},
-		},
-		{
-			name:    "copy multiple fields",
-			inPaths: []string{"name", "age", "is_male", "address.city"},
-			wantDst: map[string]interface{}{
-				"name": "foo",
-				"age":  1,
-				"address": map[string]interface{}{
-					"city": "Y",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fm := fieldmask.FieldMask{}
-			fm.Copy(src, tt.inPaths...)
-
-			gotDst := map[string]interface{}(fm)
-
-			if !reflect.DeepEqual(gotDst, tt.wantDst) {
-				t.Fatalf("Dst: Got (%#v) != Want (%#v)", gotDst, tt.wantDst)
 			}
 		})
 	}
