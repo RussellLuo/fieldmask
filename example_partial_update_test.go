@@ -50,34 +50,37 @@ func Example_partialUpdate() {
 		fmt.Printf("err: %#v\n", err)
 	}
 
-	// Update top-level fields.
+	// Update name if needed.
 	if req.FieldMask.Has("name") {
 		person.Name = req.Name
 	}
 
+	// Update age if needed.
 	if req.FieldMask.Has("age") {
 		person.Age = req.Age
 	}
 
-	// Update address subfields.
-	addressFM, ok := req.FieldMask.FieldMask("address")
-	if !ok {
-		return
-	}
+	// Update address if needed.
+	if req.FieldMask.Has("address") {
+		fm, _ := req.FieldMask.FieldMask("address")
+		if len(fm) == 0 {
+			// Clear the entire address.
+			person.Address = req.Address
+			fmt.Printf("updated: %#v\n", person)
+			return
+		}
 
-	switch {
-	case addressFM.Has("country"):
-		person.Address.Country = req.Address.Country
-	case addressFM.Has("province"):
-		person.Address.Province = req.Address.Province
-	case addressFM.Has("city"):
-		person.Address.City = req.Address.City
-	default:
-		// Empty address.
-		person.Address = req.Address
+		if fm.Has("country") {
+			person.Address.Country = req.Address.Country
+		}
+		if fm.Has("province") {
+			person.Address.Province = req.Address.Province
+		}
+		if fm.Has("city") {
+			person.Address.City = req.Address.City
+		}
+		fmt.Printf("updated: %#v\n", person)
 	}
-
-	fmt.Printf("updated: %#v\n", person)
 
 	// Output:
 	// initial: fieldmask_test.Person2{Name:"foo", Age:20, Address:fieldmask_test.Address2{Country:"X", Province:"Y", City:"Z"}}
