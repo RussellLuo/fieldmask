@@ -59,10 +59,15 @@ func (fm FieldMask) Has(path string) bool {
 
 // FieldMask returns the nested field mask at the given dot-separated path.
 // It will return ok=false if the path does not exist, or the corresponding
-// value is not a map.
+// non-nil value is not a map.
 func (fm FieldMask) FieldMask(path string) (mask FieldMask, ok bool) {
-	value, _ := fm.Get(path)
+	value, ok := fm.Get(path)
+	if ok && value == nil {
+		// Nil value is treated as an empty field mask.
+		return nil, true
+	}
 
+	// Non-nil value must be a map.
 	m, ok := value.(map[string]interface{})
 	return m, ok
 }
