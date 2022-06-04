@@ -14,10 +14,46 @@ type Address2 struct {
 	City     string `json:"city,omitempty"`
 }
 
+func (a *Address2) Update(other Address2, fm fieldmask.FieldMask) {
+	if len(fm) == 0 {
+		// Clear the entire address.
+		*a = other
+		return
+	}
+
+	if fm.Has("country") {
+		a.Country = other.Country
+	}
+	if fm.Has("province") {
+		a.Province = other.Province
+	}
+	if fm.Has("city") {
+		a.City = other.City
+	}
+}
+
 type Person2 struct {
 	Name    string   `json:"name,omitempty"`
 	Age     int      `json:"age,omitempty"`
 	Address Address2 `json:"address,omitempty"`
+}
+
+func (p *Person2) Update(other Person2, fm fieldmask.FieldMask) {
+	if len(fm) == 0 {
+		// Clear the entire person.
+		*p = other
+		return
+	}
+
+	if fm.Has("name") {
+		p.Name = other.Name
+	}
+	if fm.Has("age") {
+		p.Age = other.Age
+	}
+	if addressFM, ok := fm.FieldMask("address"); ok {
+		p.Address.Update(other.Address, addressFM)
+	}
 }
 
 type UpdatePersonRequest struct {
@@ -50,37 +86,8 @@ func Example_partialUpdate() {
 		fmt.Printf("err: %#v\n", err)
 	}
 
-	// Update name if needed.
-	if req.FieldMask.Has("name") {
-		person.Name = req.Name
-	}
-
-	// Update age if needed.
-	if req.FieldMask.Has("age") {
-		person.Age = req.Age
-	}
-
-	// Update address if needed.
-	if req.FieldMask.Has("address") {
-		fm, _ := req.FieldMask.FieldMask("address")
-		if len(fm) == 0 {
-			// Clear the entire address.
-			person.Address = req.Address
-			fmt.Printf("updated: %#v\n", person)
-			return
-		}
-
-		if fm.Has("country") {
-			person.Address.Country = req.Address.Country
-		}
-		if fm.Has("province") {
-			person.Address.Province = req.Address.Province
-		}
-		if fm.Has("city") {
-			person.Address.City = req.Address.City
-		}
-		fmt.Printf("updated: %#v\n", person)
-	}
+	person.Update(req.Person2, req.FieldMask)
+	fmt.Printf("updated: %#v\n", person)
 
 	// Output:
 	// initial: fieldmask_test.Person2{Name:"foo", Age:20, Address:fieldmask_test.Address2{Country:"X", Province:"Y", City:"Z"}}
